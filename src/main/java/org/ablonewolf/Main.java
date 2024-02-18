@@ -2,47 +2,35 @@ package org.ablonewolf;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
 
-import javax.swing.*;
-import java.sql.Connection;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.sql.SQLException;
-import java.util.Arrays;
+import java.util.Properties;
 
 public class Main {
-    private final static String CONN_STRING = "jdbc:mysql://localhost:3306/music";
-
     public static void main(String[] args) {
-
-//      parsing the username from the swing prompt
-        String username = JOptionPane.showInputDialog(null, "Enter Database Username: ");
-
-        JPasswordField passwordField = new JPasswordField();
-
-//      an int variable to store the okay or cancel option
-        int okayCancel = JOptionPane.showConfirmDialog(null, passwordField, "Enter Database Password",
-                JOptionPane.OK_CANCEL_OPTION);
-
-        final char[] password = (okayCancel == JOptionPane.OK_OPTION) ? passwordField.getPassword() : null;
-
-        var dataSource = new MysqlDataSource();
-//        dataSource.setURL(CONN_STRING);
-        dataSource.setServerName("localhost");
-        dataSource.setPort(3306);
-        dataSource.setDatabaseName("music");
-//        try (Connection ignored = DriverManager.getConnection(CONN_STRING, username, String.valueOf(password))) {
-//            System.out.println("Success!! Connection made to the music database.");
-//            Arrays.fill(password, ' ');
-//        } catch (SQLException e) {
-//            throw new RuntimeException(e);
-//        }
+        Properties properties = new Properties();
 
         try {
-            try (Connection ignored = dataSource.getConnection(username, String.valueOf(password))) {
-                System.out.println("Success!! Connection made to the music database.");
-                Arrays.fill(password, ' ');
-            }
-        } catch (SQLException e) {
+            properties.load(Files.newInputStream(Path.of("src/main/resources/music.properties"),
+                    StandardOpenOption.READ));
+        } catch (IOException e) {
             System.out.println(e.getMessage());
         }
 
+        var dataSource = new MysqlDataSource();
+        dataSource.setServerName(properties.getProperty("serverName"));
+        dataSource.setPort(Integer.parseInt(properties.getProperty("port")));
+        dataSource.setDatabaseName(properties.getProperty("databaseName"));
+
+        try (var ignored = dataSource.getConnection(
+                properties.getProperty("user"),
+                properties.getProperty("password"))) {
+            System.out.println("Success!! Connection to music database has been established.");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
