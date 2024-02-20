@@ -3,9 +3,6 @@ package org.ablonewolf;
 import com.mysql.cj.jdbc.MysqlDataSource;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -16,12 +13,10 @@ public class Main {
         Properties properties = new Properties();
 
         try {
-            properties.load(Files.newInputStream(Path.of("src/main/resources/music.properties"),
-                    StandardOpenOption.READ));
+            properties.load(Main.class.getClassLoader().getResourceAsStream("music.properties"));
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
-
         var dataSource = new MysqlDataSource();
         dataSource.setServerName(properties.getProperty("serverName"));
         dataSource.setPort(Integer.parseInt(properties.getProperty("port")));
