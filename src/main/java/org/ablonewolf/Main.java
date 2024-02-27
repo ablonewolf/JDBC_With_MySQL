@@ -32,16 +32,16 @@ public class Main {
             String tableName = "music.artists";
             executeSelect(statement, tableName, null, null);
 
-            String albumName = "Tapestry";
-            String columnName = "album_name";
-            tableName = "music.albums";
-            if (!executeSelect(statement, tableName, columnName, albumName)) {
+            String artistName = "BassBaba";
+            String columnName = "artist_name";
+            tableName = "music.artists";
+            if (!executeSelect(statement, tableName, columnName, artistName)) {
                 System.out.println("Maybe we should add this record");
                 insertRecord(statement, tableName, new String[]{columnName},
-                        new String[]{albumName});
+                        new String[]{artistName});
             }
 
-            albumName = "Mirage";
+            String albumName = "Mystica";
             columnName = "album_name";
             tableName = "music.albums";
             updateRecord(statement, tableName, columnName, albumName, columnName, albumName.toUpperCase());
