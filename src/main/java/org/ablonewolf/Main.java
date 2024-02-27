@@ -50,6 +50,19 @@ public class Main {
             columnName = "song_title";
             tableName = "music.songs";
             deleteRecord(statement, tableName, columnName, songTitle);
+
+            String[] songs = new String[]{
+                    "Cave In",
+                    "The Bird And The Worm",
+                    "Hello Seatle",
+                    "Umbrella Beach",
+                    "Fireflies",
+                    "The Tip of the Iceberg",
+                    "Vanilla Twilight"
+            };
+            artistName = "Owl City";
+            albumName = "Ocean Eyes";
+            insertArtistAlbum(statement, artistName, albumName, songs);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -104,7 +117,7 @@ public class Main {
 
         String colNames = String.join(",", columnNames);
         String colValues = String.join("','", insertedValues);
-        String query = "INSERT INTO %s (%s) VALUES ('%s')"
+        String query = "INSERT IGNORE INTO %s (%s) VALUES ('%s')"
                 .formatted(tableName, colNames, colValues);
         System.out.println(query);
         boolean insertResult = statement.execute(query);
@@ -149,5 +162,41 @@ public class Main {
         }
 
         return recordsDeleted > 0;
+    }
+
+    private static void insertArtistAlbum(Statement statement,
+                                          String artistName,
+                                          String albumName,
+                                          String[] songs)
+            throws SQLException {
+
+        String artistInsert = "INSERT IGNORE INTO music.artists (artist_name) VALUES (%s)"
+                .formatted(statement.enquoteLiteral(artistName));
+        System.out.println(artistInsert);
+        statement.execute(artistInsert, Statement.RETURN_GENERATED_KEYS);
+
+        ResultSet rs = statement.getGeneratedKeys();
+        int artistId = (rs != null && rs.next()) ? rs.getInt(1) : -1;
+        String albumInsert = ("INSERT IGNORE INTO music.albums (album_name, artist_id)" +
+                " VALUES (%s, %d)")
+                .formatted(statement.enquoteLiteral(albumName), artistId);
+        System.out.println(albumInsert);
+        statement.execute(albumInsert, Statement.RETURN_GENERATED_KEYS);
+        rs = statement.getGeneratedKeys();
+        int albumId = (rs != null && rs.next()) ? rs.getInt(1) : -1;
+
+
+        String songInsert = "INSERT IGNORE INTO music.songs " +
+                "(track_number, song_title, album_id) VALUES (%d, %s, %d)";
+
+        for (int i = 0; i < songs.length; i++) {
+            String songQuery = songInsert.formatted(i + 1,
+                    statement.enquoteLiteral(songs[i]), albumId);
+            System.out.println(songQuery);
+
+            statement.execute(songQuery);
+        }
+        executeSelect(statement, "music.albumview", "album_name",
+                albumName);
     }
 }
