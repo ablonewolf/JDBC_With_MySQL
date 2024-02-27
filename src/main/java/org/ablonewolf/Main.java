@@ -40,21 +40,31 @@ public class Main {
                 insertRecord(statement, tableName, new String[]{columnName},
                         new String[]{albumName});
             }
+
+            albumName = "Mirage";
+            columnName = "album_name";
+            tableName = "music.albums";
+            updateRecord(statement, tableName, columnName, albumName, columnName, albumName.toUpperCase());
+
+            String songTitle = "Sunday morning";
+            columnName = "song_title";
+            tableName = "music.songs";
+            deleteRecord(statement, tableName, columnName, songTitle);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     //  method to execute any select statement
-    private static boolean executeSelect(Statement statement, String table,
+    private static boolean executeSelect(Statement statement, String tableName,
                                          String columnName, String columnValue)
             throws SQLException {
         String query;
         if (Objects.nonNull(columnValue) && Objects.nonNull(columnName)) {
             query = "SELECT * FROM %s WHERE %s='%s'"
-                    .formatted(table, columnName, columnValue);
+                    .formatted(tableName, columnName, columnValue);
         } else {
-            query = "SELECT * FROM %s".formatted(table);
+            query = "SELECT * FROM %s".formatted(tableName);
         }
 
         var rs = statement.executeQuery(query);
@@ -88,21 +98,56 @@ public class Main {
     }
 
     //    method to insert new records
-    private static boolean insertRecord(Statement statement, String table,
-                                        String[] columnNames, String[] columnValues)
+    private static boolean insertRecord(Statement statement, String tableName,
+                                        String[] columnNames, String[] insertedValues)
             throws SQLException {
 
         String colNames = String.join(",", columnNames);
-        String colValues = String.join("','", columnValues);
+        String colValues = String.join("','", insertedValues);
         String query = "INSERT INTO %s (%s) VALUES ('%s')"
-                .formatted(table, colNames, colValues);
+                .formatted(tableName, colNames, colValues);
         System.out.println(query);
         boolean insertResult = statement.execute(query);
         int recordsInserted = statement.getUpdateCount();
         if (recordsInserted > 0) {
-            executeSelect(statement, table,
-                    columnNames[0], columnValues[0]);
+            executeSelect(statement, tableName,
+                    columnNames[0], insertedValues[0]);
         }
         return recordsInserted > 0;
+    }
+
+    private static boolean updateRecord(Statement statement, String tableName,
+                                        String matchedColumn, String matchedValue,
+                                        String updatedColumn, String updatedValue) throws SQLException {
+        String query = "UPDATE %s SET %s = '%s' WHERE %s='%s'"
+                .formatted(tableName, updatedColumn, updatedValue,
+                        matchedColumn, matchedValue);
+
+        System.out.println(query);
+        statement.execute(query);
+        int recordsUpdated = statement.getUpdateCount();
+
+        if (recordsUpdated > 0) {
+            executeSelect(statement, tableName, updatedColumn, updatedValue);
+        }
+
+        return recordsUpdated > 0;
+    }
+
+    private static boolean deleteRecord(Statement statement, String tableName,
+                                        String columnName, String deletedValue)
+            throws SQLException {
+        String query = "DELETE FROM %s WHERE %s='%s'"
+                .formatted(tableName, columnName, deletedValue);
+
+        System.out.println(query);
+        statement.execute(query);
+        int recordsDeleted = statement.getUpdateCount();
+
+        if (recordsDeleted > 0) {
+            executeSelect(statement, tableName, columnName, deletedValue);
+        }
+
+        return recordsDeleted > 0;
     }
 }
