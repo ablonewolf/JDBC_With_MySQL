@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Objects;
 import java.util.Properties;
 
 public class Main {
@@ -22,39 +23,86 @@ public class Main {
         dataSource.setPort(Integer.parseInt(properties.getProperty("port")));
         dataSource.setDatabaseName(properties.getProperty("databaseName"));
 
-        String albumName = "Tapestry";
-        String getAllArtistQuery = "select * from music.artists";
-        String getAlbumByNameQuery = "select * from music.albumview where album_name='%s'".formatted(albumName);
         try (var connection = dataSource.getConnection(
                 properties.getProperty("user"),
                 properties.getProperty("password"));
              Statement statement = connection.createStatement()) {
             System.out.println("Success!! Connection to music database has been established.");
-//          parsing the sql get result manually
-            ResultSet resultSet = statement.executeQuery(getAllArtistQuery);
-            System.out.println("Id Artist_Name");
-            while (resultSet.next()) {
-                System.out.printf("%d %s %n", resultSet.getInt(1), resultSet.getString("artist_name"));
-            }
-            System.out.println("==============================================================================");
-//          parsing the sql get result using metadata object
-            resultSet = statement.executeQuery(getAlbumByNameQuery);
 
-            var metaData = resultSet.getMetaData();
+            String tableName = "music.artists";
+            executeSelect(statement, tableName, null, null);
 
-            for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                System.out.printf("%-15s", metaData.getColumnName(i).toUpperCase());
-            }
-            System.out.println();
-
-            while (resultSet.next()) {
-                for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                    System.out.printf("%-15s", resultSet.getString(i));
-                }
-                System.out.println();
+            String albumName = "Tapestry";
+            String columnName = "album_name";
+            tableName = "music.albums";
+            if (!executeSelect(statement, tableName, columnName, albumName)) {
+                System.out.println("Maybe we should add this record");
+                insertRecord(statement, tableName, new String[]{columnName},
+                        new String[]{albumName});
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    //  method to execute any select statement
+    private static boolean executeSelect(Statement statement, String table,
+                                         String columnName, String columnValue)
+            throws SQLException {
+        String query;
+        if (Objects.nonNull(columnValue) && Objects.nonNull(columnName)) {
+            query = "SELECT * FROM %s WHERE %s='%s'"
+                    .formatted(table, columnName, columnValue);
+        } else {
+            query = "SELECT * FROM %s".formatted(table);
+        }
+
+        var rs = statement.executeQuery(query);
+        if (rs != null) {
+            return printRecords(rs);
+        }
+        return false;
+    }
+
+    //    method to print records using the result set received from the execute query method
+    private static boolean printRecords(ResultSet resultSet) throws SQLException {
+
+        boolean foundData = false;
+        var meta = resultSet.getMetaData();
+
+        System.out.println("=========================================================");
+
+        for (int i = 1; i <= meta.getColumnCount(); i++) {
+            System.out.printf("%-15s", meta.getColumnName(i).toUpperCase());
+        }
+        System.out.println();
+
+        while (resultSet.next()) {
+            for (int i = 1; i <= meta.getColumnCount(); i++) {
+                System.out.printf("%-15s", resultSet.getString(i));
+            }
+            System.out.println();
+            foundData = true;
+        }
+        return foundData;
+    }
+
+    //    method to insert new records
+    private static boolean insertRecord(Statement statement, String table,
+                                        String[] columnNames, String[] columnValues)
+            throws SQLException {
+
+        String colNames = String.join(",", columnNames);
+        String colValues = String.join("','", columnValues);
+        String query = "INSERT INTO %s (%s) VALUES ('%s')"
+                .formatted(table, colNames, colValues);
+        System.out.println(query);
+        boolean insertResult = statement.execute(query);
+        int recordsInserted = statement.getUpdateCount();
+        if (recordsInserted > 0) {
+            executeSelect(statement, table,
+                    columnNames[0], columnValues[0]);
+        }
+        return recordsInserted > 0;
     }
 }
