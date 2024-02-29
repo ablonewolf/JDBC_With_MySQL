@@ -3,6 +3,7 @@ package org.ablonewolf;
 import com.mysql.cj.jdbc.MysqlDataSource;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -63,6 +64,10 @@ public class Main {
             artistName = "Owl City";
             albumName = "Ocean Eyes";
             insertArtistAlbum(statement, artistName, albumName, songs);
+
+            deleteWholeAlbum(connection, statement, artistName, albumName);
+
+            executeSelect(statement, "music.albumview", "album_name", albumName);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -198,5 +203,43 @@ public class Main {
         }
         executeSelect(statement, "music.albumview", "album_name",
                 albumName);
+    }
+
+    private static void deleteWholeAlbum(Connection connection, Statement statement,
+                                         String artistName, String albumName) throws SQLException {
+        System.out.println("Auto commit status: " + connection.getAutoCommit());
+        connection.setAutoCommit(false);
+        System.out.println("Auto commit status: " + connection.getAutoCommit());
+        try {
+            String deleteSongs = """
+                    DELETE FROM music.songs WHERE album_id =
+                    (SELECT ALBUM_ID FROM music.albums WHERE album_name = '%s')
+                    """
+                    .formatted(albumName);
+
+            int deletedSongs = statement.executeUpdate(deleteSongs);
+            System.out.printf("Deleted %d rows from music.songs%n", deletedSongs);
+
+            String deleteAlbum = """
+                    DELETE FROM music.albums WHERE album_name = '%s"
+                    """.formatted(albumName);
+            int deletedAlbums = statement.executeUpdate(deleteAlbum);
+            System.out.printf("Deleted %d albums from music.albums%n", deletedAlbums);
+
+            String deleteArtist = """
+                    DELETE FROM music.artists WHERE artist_name='%s'
+                    """
+                    .formatted(artistName);
+            int deletedArtists = statement.executeUpdate(deleteArtist);
+            System.out.printf("Deleted %d artists from music.artists%n", deletedArtists);
+            connection.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
+            System.out.println("Auto commit status: " + connection.getAutoCommit());
+        }
+
     }
 }
