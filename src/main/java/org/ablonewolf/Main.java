@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -66,6 +67,8 @@ public class Main {
             insertArtistAlbum(statement, artistName, albumName, songs);
 
             deleteWholeAlbum(connection, statement, artistName, albumName);
+
+            deleteWholeAlbumAsBatch(connection, statement, artistName, albumName);
 
             executeSelect(statement, "music.albumview", "album_name", albumName);
         } catch (SQLException e) {
@@ -232,6 +235,46 @@ public class Main {
                     .formatted(artistName);
             int deletedArtists = statement.executeUpdate(deleteArtist);
             System.out.printf("Deleted %d artists from music.artists%n", deletedArtists);
+            connection.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
+            System.out.println("Auto commit status: " + connection.getAutoCommit());
+        }
+
+    }
+
+    private static void deleteWholeAlbumAsBatch(Connection connection, Statement statement,
+                                                String artistName, String albumName) throws SQLException {
+        System.out.println("Auto commit status: " + connection.getAutoCommit());
+        connection.setAutoCommit(false);
+        System.out.println("Auto commit status: " + connection.getAutoCommit());
+        try {
+            String deleteSongs = """
+                    DELETE FROM music.songs WHERE album_id =
+                    (SELECT ALBUM_ID FROM music.albums WHERE album_name = '%s')
+                    """
+                    .formatted(albumName);
+
+
+            String deleteAlbum = """
+                    DELETE FROM music.albums WHERE album_name = '%s"
+                    """.formatted(albumName);
+
+
+            String deleteArtist = """
+                    DELETE FROM music.artists WHERE artist_name='%s'
+                    """
+                    .formatted(artistName);
+
+            statement.addBatch(deleteSongs);
+            statement.addBatch(deleteAlbum);
+            statement.addBatch(deleteArtist);
+
+            int[] results = statement.executeBatch();
+            System.out.println(Arrays.toString(results));
             connection.commit();
         } catch (SQLException e) {
             e.printStackTrace();
