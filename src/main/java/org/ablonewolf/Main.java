@@ -24,6 +24,11 @@ public class Main {
         dataSource.setServerName(properties.getProperty("serverName"));
         dataSource.setPort(Integer.parseInt(properties.getProperty("port")));
         dataSource.setDatabaseName(properties.getProperty("databaseName"));
+        try {
+            dataSource.setContinueBatchOnError(false);
+        } catch (SQLException e) {
+            System.out.println("Unable to mark continue in case of any batch error.");
+        }
 
         try (var connection = dataSource.getConnection(
                 properties.getProperty("user"),
