@@ -3,10 +3,7 @@ package org.ablonewolf;
 import com.mysql.cj.jdbc.MysqlDataSource;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
@@ -38,6 +35,8 @@ public class Main {
 
             String tableName = "music.artists";
             executeSelect(statement, tableName, null, null);
+            executeSelectUsingPreparedStatement(connection, statement, "music.albumview", "artist_name",
+                    "Budgie");
 
             String artistName = "BassBaba";
             String columnName = "artist_name";
@@ -100,6 +99,26 @@ public class Main {
         return false;
     }
 
+    private static void executeSelectUsingPreparedStatement(Connection connection, Statement statement,
+                                                            String tableName, String columnName,
+                                                            String columnValue) throws SQLException {
+        String query;
+        ResultSet resultSet;
+        if (Objects.nonNull(columnValue) && Objects.nonNull(columnName)) {
+            query = "SELECT * FROM %s WHERE %s=?"
+                    .formatted(tableName, columnName);
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, columnValue);
+            resultSet = preparedStatement.executeQuery();
+        } else {
+            query = "SELECT * FROM %s".formatted(tableName);
+            resultSet = statement.executeQuery(query);
+        }
+        if (resultSet != null) {
+            printRecords(resultSet);
+        }
+    }
+
     //    method to print records using the result set received from the execute query method
     private static boolean printRecords(ResultSet resultSet) throws SQLException {
 
@@ -124,8 +143,8 @@ public class Main {
     }
 
     //    method to insert new records
-    private static boolean insertRecord(Statement statement, String tableName,
-                                        String[] columnNames, String[] insertedValues)
+    private static void insertRecord(Statement statement, String tableName,
+                                     String[] columnNames, String[] insertedValues)
             throws SQLException {
 
         String colNames = String.join(",", columnNames);
@@ -133,18 +152,16 @@ public class Main {
         String query = "INSERT IGNORE INTO %s (%s) VALUES ('%s')"
                 .formatted(tableName, colNames, colValues);
         System.out.println(query);
-        boolean insertResult = statement.execute(query);
         int recordsInserted = statement.getUpdateCount();
         if (recordsInserted > 0) {
             executeSelect(statement, tableName,
                     columnNames[0], insertedValues[0]);
         }
-        return recordsInserted > 0;
     }
 
-    private static boolean updateRecord(Statement statement, String tableName,
-                                        String matchedColumn, String matchedValue,
-                                        String updatedColumn, String updatedValue) throws SQLException {
+    private static void updateRecord(Statement statement, String tableName,
+                                     String matchedColumn, String matchedValue,
+                                     String updatedColumn, String updatedValue) throws SQLException {
         String query = "UPDATE %s SET %s = '%s' WHERE %s='%s'"
                 .formatted(tableName, updatedColumn, updatedValue,
                         matchedColumn, matchedValue);
@@ -157,11 +174,10 @@ public class Main {
             executeSelect(statement, tableName, updatedColumn, updatedValue);
         }
 
-        return recordsUpdated > 0;
     }
 
-    private static boolean deleteRecord(Statement statement, String tableName,
-                                        String columnName, String deletedValue)
+    private static void deleteRecord(Statement statement, String tableName,
+                                     String columnName, String deletedValue)
             throws SQLException {
         String query = "DELETE FROM %s WHERE %s='%s'"
                 .formatted(tableName, columnName, deletedValue);
@@ -174,7 +190,6 @@ public class Main {
             executeSelect(statement, tableName, columnName, deletedValue);
         }
 
-        return recordsDeleted > 0;
     }
 
     private static void insertArtistAlbum(Statement statement,
