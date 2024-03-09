@@ -1,4 +1,4 @@
-package org.ablonewolf;
+package org.ablonewolf.jdbc;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
 

@@ -1,4 +1,4 @@
-package org.ablonewolf;
+package org.ablonewolf.jdbc;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
 
@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import static org.ablonewolf.Main.printRecords;
+import static org.ablonewolf.jdbc.Main.printRecords;
 
 public class PreparedStatementMain {
 
