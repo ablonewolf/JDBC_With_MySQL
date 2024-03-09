@@ -120,7 +120,7 @@ public class Main {
     }
 
     //    method to print records using the result set received from the execute query method
-    private static boolean printRecords(ResultSet resultSet) throws SQLException {
+    public static boolean printRecords(ResultSet resultSet) throws SQLException {
 
         boolean foundData = false;
         var meta = resultSet.getMetaData();

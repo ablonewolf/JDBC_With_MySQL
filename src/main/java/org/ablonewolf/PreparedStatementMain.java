@@ -16,6 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import static org.ablonewolf.Main.printRecords;
+
 public class PreparedStatementMain {
 
     private static final String ARTIST_INSERT =
@@ -61,23 +63,6 @@ public class PreparedStatementMain {
         }
     }
 
-    private static void printRecords(ResultSet resultSet) throws SQLException {
-        var meta = resultSet.getMetaData();
-
-        System.out.println("===================");
-
-        for (int i = 1; i <= meta.getColumnCount(); i++) {
-            System.out.printf("%-15s", meta.getColumnName(i).toUpperCase());
-        }
-        System.out.println();
-
-        while (resultSet.next()) {
-            for (int i = 1; i <= meta.getColumnCount(); i++) {
-                System.out.printf("%-15s", resultSet.getString(i));
-            }
-            System.out.println();
-        }
-    }
 
     private static int addArtist(PreparedStatement ps, String artistName) throws SQLException {
         int artistId = -1;
