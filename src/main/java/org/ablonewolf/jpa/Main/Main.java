@@ -18,8 +18,13 @@ public class Main {
             transaction.begin();
 
             // Perform database operations (e.g., persisting entities)
-            entityManager.persist(new Artist("Muddy Water"));
-
+            Artist newArtist = new Artist("Muddy Water");
+            entityManager.persist(newArtist);
+//          here, the id of the latest added row is 209. Hence, I passed this value.
+//          In other DB, this value might be different.
+            Artist artist = entityManager.find(Artist.class, newArtist.getId());
+            System.out.println("Artist name: " + artist.getName());
+            entityManager.remove(artist);
             // Commit the transaction if everything is successful
             transaction.commit();
         } catch (Exception e) {
