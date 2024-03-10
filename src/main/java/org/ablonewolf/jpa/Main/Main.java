@@ -24,7 +24,8 @@ public class Main {
 //          In other DB, this value might be different.
             Artist artist = entityManager.find(Artist.class, newArtist.getId());
             System.out.println("Artist name: " + artist.getName());
-            entityManager.remove(artist);
+            artist.setName("Muddy Waters");
+//            entityManager.remove(artist);
             // Commit the transaction if everything is successful
             transaction.commit();
         } catch (Exception e) {
