@@ -8,6 +8,7 @@ import lombok.*;
 @Getter
 @Setter
 @NoArgsConstructor
+@RequiredArgsConstructor
 @ToString
 public class Album implements Comparable<Album> {
     @Id
@@ -16,12 +17,9 @@ public class Album implements Comparable<Album> {
     @Setter(AccessLevel.NONE)
     private Integer id;
 
+    @NonNull
     @Column(name = "album_name")
     private String name;
-
-    public Album(String name) {
-        this.name = name;
-    }
 
     @Override
     public int compareTo(Album album) {
