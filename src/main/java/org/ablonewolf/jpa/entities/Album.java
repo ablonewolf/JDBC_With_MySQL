@@ -9,7 +9,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @ToString
-public class Album {
+public class Album implements Comparable<Album> {
     @Id
     @Column(name = "album_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,5 +19,12 @@ public class Album {
     @Column(name = "album_name")
     private String name;
 
+    public Album(String name) {
+        this.name = name;
+    }
 
+    @Override
+    public int compareTo(Album album) {
+        return this.getName().compareTo(album.getName());
+    }
 }
