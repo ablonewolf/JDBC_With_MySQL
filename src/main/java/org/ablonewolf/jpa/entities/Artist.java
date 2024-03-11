@@ -23,7 +23,7 @@ public class Artist {
     @Column(name = "artist_name")
     private String name;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "artist_id")
     @Setter(AccessLevel.NONE)
     private List<Album> albums = new ArrayList<>();
@@ -36,6 +36,10 @@ public class Artist {
         var albumSet = new TreeSet<>(albums);
         albums.clear();
         albums.addAll(albumSet);
+    }
+
+    public void addAlbum(String albumName) {
+        this.albums.add(new Album(albumName));
     }
 
 }
